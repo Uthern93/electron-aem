@@ -18,6 +18,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     chartBar: [],
     tableUsers: [],
   };
+  
   isLoading = true;
 
   private donutRoot!: am5.Root;
@@ -33,7 +34,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
         setTimeout(() => {
           this.renderDonutChart();
-          // this.renderBarChart();
+          this.renderBarChart();
         });
       },
       error: (err) => {
@@ -57,7 +58,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const series = chart.series.push(
       am5percent.PieSeries.new(this.donutRoot, {
         valueField: 'value',
-        categoryField: 'label',
+        categoryField: 'name',
         innerRadius: am5.percent(60),
       }),
     );
@@ -65,39 +66,44 @@ export class DashboardComponent implements OnInit, OnDestroy {
     series.data.setAll(this.dashboardData.chartDonut);
   }
 
-  // renderBarChart() {
-  //   this.barRoot = am5.Root.new('barChart');
+  renderBarChart() {
+    this.barRoot = am5.Root.new('barChart');
 
-  //   this.barRoot.setThemes([am5themes_Animated.new(this.barRoot)]);
+    this.barRoot.setThemes([am5themes_Animated.new(this.barRoot)]);
 
-  //   const chart = this.barRoot.container.children.push(
-  //     am5xy.XYChart.new(this.barRoot, {}),
-  //   );
+    const chart = this.barRoot.container.children.push(
+      am5xy.XYChart.new(this.barRoot, {}),
+    );
 
-  //   // X Axis (categories)
-  //   const xAxis = chart.xAxes.push(
-  //     am5xy.CategoryAxis.new(this.barRoot, {
-  //       categoryField: 'name',
-  //     }),
-  //   );
+    const xAxis = chart.xAxes.push(
+      am5xy.CategoryAxis.new(this.barRoot, {
+        categoryField: 'name',
+        renderer: am5xy.AxisRendererX.new(this.barRoot, {
+          minGridDistance: 10,
+        }),
+      }),
+    );
 
-  //   xAxis.data.setAll(this.dashboardData.chartBar);
+    xAxis.data.setAll(this.dashboardData.chartBar);
 
-  //   // Y Axis (values)
-  //   const yAxis = chart.yAxes.push(am5xy.ValueAxis.new(this.barRoot, {}));
+    const yAxis = chart.yAxes.push(
+      am5xy.ValueAxis.new(this.barRoot, {
+        renderer: am5xy.AxisRendererY.new(this.barRoot, {}),
+      }),
+    );
 
-  //   // Series
-  //   const series = chart.series.push(
-  //     am5xy.ColumnSeries.new(this.barRoot, {
-  //       xAxis,
-  //       yAxis,
-  //       valueYField: 'value',
-  //       categoryXField: 'name',
-  //     }),
-  //   );
+    // ✅ Series (bars)
+    const series = chart.series.push(
+      am5xy.ColumnSeries.new(this.barRoot, {
+        xAxis,
+        yAxis,
+        valueYField: 'value',
+        categoryXField: 'name',
+      }),
+    );
 
-  //   series.data.setAll(this.dashboardData.chartBar);
-  // }
+    series.data.setAll(this.dashboardData.chartBar);
+  }
 
   ngOnDestroy(): void {
     if (this.donutRoot) {
