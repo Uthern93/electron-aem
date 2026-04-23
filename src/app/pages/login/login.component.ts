@@ -3,6 +3,7 @@ import { FormBuilder, Validators } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
 import { NotificationService } from 'src/app/services/notification.service';
+import { PouchdbService } from 'src/app/services/pouchdb.service';
 
 @Component({
   selector: 'app-login',
@@ -14,7 +15,8 @@ export class LoginComponent implements OnInit {
     private fb: FormBuilder,
     private auth: AuthService,
     private router: Router,
-    private notify: NotificationService
+    private notify: NotificationService,
+    private pouch: PouchdbService,
   ) {}
 
   message: string = '';
@@ -22,8 +24,6 @@ export class LoginComponent implements OnInit {
   isLoading = false;
 
   ngOnInit(): void {
-    const token = localStorage.getItem("auth_token");
-    this.router.navigate(['/dashboard']);
   }
 
   loginForm = this.fb.group({
@@ -31,44 +31,50 @@ export class LoginComponent implements OnInit {
     password: ['', Validators.required],
   });
 
-  onSubmit() {
+  async onSubmit() {
     this.isLoading = true;
 
-    if (this.loginForm.valid) {
-      this.auth.login(this.loginForm.value).subscribe({
-        next: (token) => {
-          console.log(token);
-          this.isLoading = false;
-
-          localStorage.setItem('auth_token', token);
-
-          this.notify.show('success', 'Login successful!');
-
-          this.router.navigate(['/dashboard']);
-        },
-
-        error: (err) => {
-          this.isLoading = false;
-
-          console.error(err);
-          let msg = 'Login failed. Please try again.';
-
-          if (err.status === 401) {
-            msg = 'Invalid username or password.';
-          } else if (err.status === 0) {
-            msg = 'Server unreachable. Please check your connection.';
-          }
-
-          this.notify.show('error', msg);
-        },
-      });
-    } else {
+    if (!this.loginForm.valid) {
       this.isLoading = false;
-
       this.notify.show(
         'error',
         'Please fill in all required fields correctly.',
       );
+      return;
     }
+
+    const { username, password } = this.loginForm.value;
+
+    this.auth.login({ username, password }).subscribe({
+      next: async (token) => {
+        this.isLoading = false;
+
+        localStorage.setItem('auth_token', token);
+
+        await this.pouch.saveUser({ username, password });
+
+        this.notify.show('success', 'Login successful!');
+        this.router.navigate(['/dashboard']);
+      },
+
+      error: async (err) => {
+        console.error(err);
+        const user = await this.pouch.getUser(username!);
+
+        if (user && user.password === password) {
+          localStorage.setItem('auth_token', 'offline-token');
+
+          this.notify.show('success', 'Offline login successful!');
+          this.router.navigate(['/dashboard']);
+        } else {
+          this.notify.show(
+            'error',
+            'Login failed. Invalid credentials.',
+          );
+        }
+
+        this.isLoading = false;
+      },
+    });
   }
 }

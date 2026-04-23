@@ -1,27 +1,142 @@
-# AngularAem
+# Project Setup Guide
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 14.2.13.
+This guide will help you set up and run the project from scratch on a new machine.
 
-## Development server
+---
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+## Prerequisites
 
-## Code scaffolding
+Before starting, make sure you have the following installed:
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+- Node.js (v16 or above recommended)
+- npm (comes with Node.js)
+- Angular CLI
+- Git
 
-## Build
+Check versions:
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+```bash
+node -v
+npm -v
+ng version
+git --version
+```
 
-## Running unit tests
+---
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+## Clone Project
 
-## Running end-to-end tests
+```bash
+git clone https://github.com/your-username/your-project.git
+cd your-project
+```
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
+---
 
-## Further help
+## Install Dependencies
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+```bash
+npm install
+```
+
+---
+
+## Run Project (Development)
+
+Run this project by usinmg this custom script:
+
+Run:
+
+```bash
+npm run start:all
+```
+
+This will:
+- Start Angular (http://localhost:4200)
+- Start Electron app
+
+---
+
+## Manual Run (Optional)
+
+Angular only:
+
+```bash
+ng serve
+```
+
+Electron only:
+
+```bash
+npm run electron
+```
+
+---
+
+## Build Angular
+
+```bash
+ng build
+```
+
+Output:
+
+```
+dist/
+```
+
+---
+
+## Production Electron Build
+
+```bash
+npm run electron:build
+```
+
+Or:
+
+```bash
+npm run dist
+```
+
+---
+
+## Project Structure
+
+```
+src/
+  app/
+    components/
+    pages/
+    services/
+    models/
+
+electron/
+  main.ts
+  preload.ts
+
+dist/
+```
+
+---
+
+## Scripts
+
+```json
+{
+  "scripts": {
+    "start": "ng serve",
+    "electron": "electron .",
+    "start:all": "concurrently \"ng serve\" \"npm run electron\"",
+    "build": "ng build",
+    "electron:build": "npm run build && electron .",
+    "dist": "electron-builder"
+  }
+}
+```
+
+---
+
+## Workflow
+
+Clone Project → NPM Install → npm run start:all → develop → ng build → electron build → package

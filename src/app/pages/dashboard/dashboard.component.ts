@@ -92,7 +92,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
       }),
     );
 
-    // ✅ Series (bars)
     const series = chart.series.push(
       am5xy.ColumnSeries.new(this.barRoot, {
         xAxis,
