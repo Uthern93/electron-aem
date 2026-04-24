@@ -32,7 +32,7 @@ export interface ChartData {
 
 export class AuthService {
 
-  private API = environment.API_URL ?? "http://localhost:3000/api";
+  private API = environment.API_URL;
 
   constructor(private http: HttpClient) { }
 

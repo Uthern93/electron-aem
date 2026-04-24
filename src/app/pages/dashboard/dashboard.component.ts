@@ -1,5 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { AuthService, ChartData } from 'src/app/services/auth.service';
+import { NotificationService } from 'src/app/services/notification.service';
+import { PouchdbService } from 'src/app/services/pouchdb.service';
 
 import * as am5 from '@amcharts/amcharts5';
 import * as am5xy from '@amcharts/amcharts5/xy';
@@ -24,24 +26,58 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private donutRoot!: am5.Root;
   private barRoot!: am5.Root;
 
-  constructor(private auth: AuthService) {}
+  constructor(
+    private auth: AuthService,
+    private pouch: PouchdbService,
+    private notify: NotificationService,
+  ) {}
 
   ngOnInit(): void {
     this.auth.dashboard().subscribe({
-      next: (res) => {
+      next: async (res) => {
         this.dashboardData = res;
+        await this.pouch.saveDashboardData(res);
+        
         this.isLoading = false;
-
-        setTimeout(() => {
-          this.renderDonutChart();
-          this.renderBarChart();
-        });
+        this.renderCharts();
       },
-      error: (err) => {
+      error: async (err) => {
         console.error(err);
+        const offlineData = await this.pouch.getDashboardData();
+
+        if (offlineData) {
+          this.dashboardData = offlineData;
+          this.notify.show(
+            'success',
+            'Offline mode: showing the latest saved dashboard data.',
+          );
+          this.isLoading = false;
+          this.renderCharts();
+          return;
+        }
+
+        this.notify.show('error', 'Unable to load dashboard data.');
         this.isLoading = false;
       },
     });
+  }
+
+  private renderCharts() {
+    setTimeout(() => {
+      this.disposeCharts();
+      this.renderDonutChart();
+      this.renderBarChart();
+    });
+  }
+
+  private disposeCharts() {
+    if (this.donutRoot) {
+      this.donutRoot.dispose();
+    }
+
+    if (this.barRoot) {
+      this.barRoot.dispose();
+    }
   }
 
   renderDonutChart() {
@@ -105,12 +141,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    if (this.donutRoot) {
-      this.donutRoot.dispose();
-    }
-
-    if (this.barRoot) {
-      this.barRoot.dispose();
-    }
+    this.disposeCharts();
   }
 }
